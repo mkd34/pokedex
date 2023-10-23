@@ -1,16 +1,10 @@
-import { useEffect, useState } from 'react'
-
 type SearchBarDropDownProps = {
-  childToParent: Function
+  onChange: (category: string) => void
   label: string
+  categories: string[]
 }
 
 export const SearchBarDropDown = (my_props: SearchBarDropDownProps) => {
-  const [childData, setChildData] = useState<string>()
-
-  useEffect(() => {
-    my_props.childToParent(childData)
-  }, [childData])
   return (
     <div className='group relative'>
       <button className='bg-slate-400 text-slate-700 font-semibold text-sm py-2 px-4 inline-flex items-center w-full rounded-l-md'>
@@ -20,28 +14,17 @@ export const SearchBarDropDown = (my_props: SearchBarDropDownProps) => {
         </svg>
       </button>
       <ul className='absolute hidden text-gray-700 pt-1 group-hover:block text-sm text-left w-full'>
-        <li className=''>
-          <a
-            onClick={() => {
-              setChildData('pokemon')
-            }}
-            className='rounded-t bg-gray-200 hover:bg-gray-400 py-2 px-4 block whitespace-no-wrap'
-            href='#'
-          >
-            pokemon
-          </a>
-        </li>
-        <li className=''>
-          <a
-            onClick={() => {
-              setChildData('region')
-            }}
-            className='bg-gray-200 hover:bg-gray-400 py-2 px-4 block whitespace-no-wrap'
-            href='#'
-          >
-            region
-          </a>
-        </li>
+        {my_props.categories?.map((category, i) => (
+          <li className='' key={category}>
+            <a
+              onClick={() => my_props.onChange(category)}
+              className='bg-gray-200 hover:bg-gray-400 py-2 px-4 block whitespace-no-wrap'
+              href='#'
+            >
+              {category}
+            </a>
+          </li>
+        ))}
       </ul>
     </div>
   )

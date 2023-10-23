@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { PokemonCard, ShinyToggle } from './components'
 import { SearchBarDropDown } from './components/SearchBar'
 
@@ -34,8 +34,11 @@ const getAllPokemonSpecies = async () => {
 export default function Home() {
   const [data, setData] = useState<PokemonSpeciesResponse>()
   const [showShiny, setShowShiny] = useState(false)
+  const [category, setCategory] = useState<string>()
+
   const [searchInput, setSearchInput] = useState('')
-  const [category, setCategory] = useState('select category')
+  const searchResults =
+    searchInput.length > 0 ? data?.results.filter((pokemon) => pokemon.name.includes(searchInput)) : data?.results
 
   useEffect(() => {
     getAllPokemonSpecies().then((pokemon) => setData(pokemon))
@@ -43,32 +46,22 @@ export default function Home() {
 
   const router = useRouter()
 
-  const handlePokemonClick = async (name: string) => {
-    router.push('/' + name)
-  }
-  const handleSearchChange = (e: any) => {
-    e.preventDefault()
-    setSearchInput(e.target.value)
-  }
-  let searchResults: PokemonResults[] | undefined
-  if (searchInput.length > 0) {
-    searchResults = data?.results.filter((e) => {
-      return e.name.includes(searchInput)
-    })
-  } else if (searchInput.length === 0) {
-    searchResults = data?.results
-  }
+  const handlePokemonClick = async (name: string) => router.push('/' + name)
 
-  const childToParent = (childData: string) => {
-    setCategory(childData)
-  }
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value)
+
+  const handleSetCategory = (category: string) => setCategory(category)
 
   return (
     <div>
       <div className='flex justify-around'>
         <div className='grid grid-cols-4 z-20 py-5'>
           <div className='mt-auto grid col-span-1'>
-            <SearchBarDropDown childToParent={childToParent} label={category} />
+            <SearchBarDropDown
+              onChange={handleSetCategory}
+              label={category ?? 'select category'}
+              categories={['pokemon', 'region']}
+            />
           </div>
           <input
             type='search'

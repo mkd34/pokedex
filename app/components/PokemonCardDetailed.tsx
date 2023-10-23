@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { FlavorText, PokemonDetailedResponse, PokemonSpeciesResponse } from '../[name]/page'
+import { Pokemon, PokemonSpecies } from 'pokenode-ts'
+import { ChangeEvent, useState } from 'react'
+import { FlavorText, PokemonSpeciesResponse } from '../[name]/page'
 
 type PokemonCardDetailedProps = {
   name?: string
@@ -11,11 +12,15 @@ type PokemonCardDetailedProps = {
   flavor_text?: string
   flavor_text_entries?: FlavorText[]
   key?: React.Key
+  pokemon_list?: PokemonSpecies
+  pokemon?: Pokemon
+  my_pokemon?: PokemonSpeciesResponse
 }
 
-type PokemonDataProps = {
-  pokemon_list?: PokemonSpeciesResponse
-  pokemon?: PokemonDetailedResponse
+type PokemonCardFlavorText3Props = {
+  pokemon_list?: PokemonSpecies
+  pokemon?: Pokemon
+  my_pokemon?: PokemonSpeciesResponse
 }
 
 type DexButtonsProps = {
@@ -27,36 +32,33 @@ type DexButtonsProps = {
 export const PokemonCardDetailed = (pokemon: PokemonCardDetailedProps) => {
   let type_color_1: string = getTypeColor(pokemon.type_array?.[0])
   let type_color_2: string = getTypeColor(pokemon.type_array?.[1])
-  if (pokemon.type_array?.length === 2) {
-    return (
-      <div className='w-fit'>
-        <div className='text-2xl text-slate-50'>{pokemon.name}</div>
-        <img
-          src={pokemon.image}
-          alt={pokemon.name}
-          className='bg-slate-900 w-40 border-2 border-slate-300 rounded-lg drop-shadow-sm'
-        />
-        <div className='flex justify-around'>
-          <div className={type_color_1}>{pokemon.type_array?.[0]}</div>
-          <div className={type_color_2}>{pokemon.type_array?.[1]}</div>
+
+  return (
+    <div className='px-4'>
+      <div className='text-2xl text-slate-50'>{pokemon.name}</div>
+      <div className='grid grid-cols-3'>
+        <div className='grid grid-rows-2 col-span-1 justify-center'>
+          <img
+            src={pokemon.image}
+            alt={pokemon.name}
+            className='bg-slate-900 w-40 border-2 border-slate-300 rounded-lg drop-shadow-sm'
+          />
+          <div className='flex justify-around h-fit mt-2'>
+            <div className={type_color_1}>{pokemon.type_array?.[0]}</div>
+            <div className={type_color_2}>{pokemon.type_array?.[1] ?? 'none'}</div>
+          </div>
+        </div>
+
+        <div className='bg-slate-300 italic text-sm rounded-lg h-max w-96 p-4 grid col-span-2 justify-start drop-shadow-sm'>
+          <PokemonCardFlavorText3
+            pokemon_list={pokemon.pokemon_list}
+            pokemon={pokemon.pokemon}
+            my_pokemon={pokemon.my_pokemon}
+          />
         </div>
       </div>
-    )
-  } else {
-    return (
-      <div className='w-fit'>
-        <div className='text-2xl text-slate-50'>{pokemon.name}</div>
-        <img
-          src={pokemon.image}
-          alt={pokemon.name}
-          className='bg-slate-900 w-40 border-2 border-slate-300 rounded-lg drop-shadow-sm'
-        />
-        <div className='flex justify-around'>
-          <div className={type_color_1}>{pokemon.type_array?.[0]}</div>
-        </div>
-      </div>
-    )
-  }
+    </div>
+  )
 }
 
 export const getTypeColor = (type: string | undefined) => {
@@ -125,66 +127,33 @@ export const PokemonCardFlavorText = (text: PokemonCardDetailedProps) => {
   return <div className='italic text-base'>{text.flavor_text?.replace('\f', ' ')}</div>
 }
 
-export const PokemonCardFlavorText2 = (mydata: PokemonDataProps) => {
-  const [dex, setDex] = useState('red')
+export const PokemonCardFlavorText3 = (pokemonData: PokemonCardFlavorText3Props) => {
+  const [flavorText, setFlavorText] = useState<string>()
+  let filteredText: FlavorText[] | undefined
 
-  const childToParent = (childData: string) => {
-    setDex(childData)
+  const handleDexClick = (e: ChangeEvent<HTMLSelectElement>) => {
+    filteredText = pokemonData.my_pokemon?.flavor_text_entries
+      .filter((value: FlavorText) => value.version.name === e.target.value)
+      .filter((value: FlavorText) => value.language.name.includes('en'))
+    setFlavorText(filteredText?.at(0)?.flavor_text.replace('\f', ' '))
   }
 
-  // to do: handle clicks of different game buttons
-
-  //   console.log(mydata.pokemon?.held_items?.at(0)?.version_details.at(0)?.version.name)
-  mydata.pokemon?.held_items?.forEach((value) => {
-    value.version_details.forEach((value2) => {
-      console.log(value2.version.name)
-    })
-  })
-
-  return (
-    <div className='grid grid-cols-2'>
-      <div>
-        {mydata?.pokemon_list?.flavor_text_entries?.map((flavor, i) => {
-          if (flavor.language.name.includes('en') && flavor.version.name === dex) {
-            return <PokemonCardFlavorText key={flavor.flavor_text} flavor_text={flavor.flavor_text} />
-          }
-        })}
-      </div>
-      <div className='grid grid-flow-row gap-2 text-slate-500'>
-        {mydata?.pokemon?.game_indices?.map((dex, i) => {
-          return <DexButtons key={dex.game_index} pokedex_name={dex.version.name} childToParent={childToParent} />
-        })}
-      </div>
-      {/* {mydata?.pokemon?.held_items?.map((dex, i) => {
-        return (
-          <DexButtons
-            key={dex.version_details.version?.name}
-            pokedex_name={dex.version_details.version?.name}
-            childToParent={childToParent}
-          />
-        )
-      })} */}
-    </div>
-  )
-}
-
-export const DexButtons = (dex: DexButtonsProps) => {
-  const [childData, setChildData] = useState<string>()
-
-  useEffect(() => {
-    dex.childToParent(childData)
-  }, [childData])
   return (
     <div>
-      <button
-        className='bg-slate-100'
-        onClick={() => {
-          setChildData(dex.pokedex_name)
-        }}
-      >
-        {' '}
-        {dex.pokedex_name}
-      </button>
+      <select name='dexes' id='dexes' onChange={(e) => handleDexClick(e)}>
+        {pokemonData.my_pokemon?.flavor_text_entries
+          .filter((value: FlavorText) => value.language.name.includes('en'))
+          .map((entry, i) => (
+            <option value={entry.version.name}>{entry.version.name}</option>
+          ))}
+      </select>
+      <div className='mt-2'>
+        {flavorText ??
+          pokemonData.my_pokemon?.flavor_text_entries
+            .filter((text: FlavorText) => text.language.name.includes('en'))
+            .at(0)
+            ?.flavor_text.replace('\f', ' ')}
+      </div>
     </div>
   )
 }

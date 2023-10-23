@@ -1,13 +1,9 @@
 'use client'
 
+import { MainClient, Pokemon, PokemonSpecies } from 'pokenode-ts'
 import { useEffect, useState } from 'react'
 import { ShinyToggle } from '../components'
-import {
-  PokemonCardDetailed,
-  PokemonCardDetailedStats,
-  PokemonCardFlavorText2,
-} from '../components/PokemonCardDetailed'
-import { Pokemon } from '../types'
+import { PokemonCardDetailed } from '../components/PokemonCardDetailed'
 
 export type Types = {
   slot?: number
@@ -77,67 +73,56 @@ export type PokemonSpeciesResponse = {
   pokedex_numbers: PokedexEntry[]
 }
 
-const getPokemon = async (name: string) => {
-  const url = 'https://pokeapi.co/api/v2/pokemon/' + name
-  const response = await fetch(url)
-  const data = (await response.json()) as Pokemon
-  return data
-}
-
-const getSpecies = async (name: string) => {
+const getPokemonSpecies = async (name: string) => {
   const url = 'https://pokeapi.co/api/v2/pokemon-species/' + name
   const response = await fetch(url)
   const data = (await response.json()) as PokemonSpeciesResponse
   return data
 }
 
+const api = new MainClient()
+
 export default function Page({ params }: { params: { name: string } }) {
   const [showShiny, setShowShiny] = useState(false)
-  const [dex, setDex] = useState('red')
-  const [data, setData] = useState<PokemonDetailedResponse>()
-  const [dataSpecies, setDataSpecies] = useState<PokemonSpeciesResponse>()
+  const [data, setData] = useState<Pokemon>()
+  const [myData, setMyData] = useState<PokemonSpeciesResponse>()
+  const [dataSpecies, setDataSpecies] = useState<PokemonSpecies>()
 
   let type_array: string[] = []
 
-  const childToParent = (childData: string) => {
-    setDex(childData)
-  }
-
   useEffect(() => {
-    getPokemon(params.name).then((pokemon) => setData(pokemon))
+    api.pokemon.getPokemonByName(params.name).then((pokemon) => setData(pokemon))
   }, [params.name])
 
   useEffect(() => {
-    getSpecies(params.name).then((species) => setDataSpecies(species))
+    api.pokemon.getPokemonSpeciesByName(params.name).then((species) => setDataSpecies(species))
   }, [params.name])
 
-  data?.types?.map((types, i) => {
-    return type_array.push(types.type?.name as string)
+  useEffect(() => {
+    getPokemonSpecies(params.name).then((pokemon) => setMyData(pokemon))
+  }, [params.name])
+
+  data?.types?.map((type) => {
+    return type_array.push(type.type?.name as string)
   })
 
   return (
     <div className='p-3'>
-      <div className='bg-slate-700 rounded-lg drop-shadow-sm grid grid-cols-2 w-96 z-0 p-2'>
-        <div className='relative'>
+      <div className='bg-slate-700 rounded-lg drop-shadow-sm z-0 p-2 w-fit gap-2'>
+        <div className='relative flex justify-start'>
           <PokemonCardDetailed
             name={params.name}
             image={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
               showShiny ? 'shiny/' : ''
             }${data?.id}.png`}
             type_array={type_array}
+            pokemon_list={dataSpecies}
+            pokemon={data}
+            my_pokemon={myData}
           />
-          <div className='absolute bottom-7 left-2'>
+          <div className='absolute top-10 left-10'>
             <ShinyToggle isOn={showShiny} onToggle={() => setShowShiny(!showShiny)} />
           </div>
-        </div>
-        <div className='text-slate-50 px-2'>
-          {/* {dataSpecies?.flavor_text_entries.map((flavor, i) => {
-            if (flavor.language.name.includes('en') && flavor.version.name === dex) {
-              return <PokemonCardFlavorText key={flavor.flavor_text} flavor_text={flavor.flavor_text} />
-            }
-          })} */}
-          <PokemonCardFlavorText2 pokemon_list={dataSpecies} pokemon={data} />
-          <PokemonCardDetailedStats height={data?.height} weight={data?.weight} />
         </div>
       </div>
     </div>
