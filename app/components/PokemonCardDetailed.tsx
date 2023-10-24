@@ -144,7 +144,9 @@ export const PokemonCardFlavorText3 = (pokemonData: PokemonCardFlavorText3Props)
         {pokemonData.my_pokemon?.flavor_text_entries
           .filter((value: FlavorText) => value.language.name.includes('en'))
           .map((entry, i) => (
-            <option value={entry.version.name}>{entry.version.name}</option>
+            <option value={entry.version.name} key={entry.version.name}>
+              {entry.version.name}
+            </option>
           ))}
       </select>
       <div className='mt-2'>
