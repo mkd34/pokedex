@@ -2,7 +2,6 @@
 
 import { MainClient, Pokemon, PokemonSpecies } from 'pokenode-ts'
 import { useEffect, useState } from 'react'
-import { ShinyToggle } from '../components'
 import { PokemonCardDetailed } from '../components/PokemonCardDetailed'
 
 export type Types = {
@@ -108,21 +107,16 @@ export default function Page({ params }: { params: { name: string } }) {
 
   return (
     <div className='p-3'>
-      <div className='bg-slate-700 rounded-lg drop-shadow-sm z-0 p-2 w-fit gap-2'>
+      <div className='bg-slate-700 rounded-lg drop-shadow-sm z-0 p-2 w-fit max-w-prose gap-2'>
         <div className='relative flex justify-start'>
           <PokemonCardDetailed
             name={params.name}
-            image={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
-              showShiny ? 'shiny/' : ''
-            }${data?.id}.png`}
+            id={data?.id}
             type_array={type_array}
             pokemon_list={dataSpecies}
             pokemon={data}
             my_pokemon={myData}
           />
-          <div className='absolute top-10 left-10'>
-            <ShinyToggle isOn={showShiny} onToggle={() => setShowShiny(!showShiny)} />
-          </div>
         </div>
       </div>
     </div>

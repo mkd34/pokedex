@@ -1,5 +1,6 @@
 import { Pokemon, PokemonSpecies } from 'pokenode-ts'
 import { ChangeEvent, useState } from 'react'
+import { ShinyToggle } from '.'
 import { FlavorText, PokemonSpeciesResponse } from '../[name]/page'
 
 type PokemonCardDetailedProps = {
@@ -8,6 +9,7 @@ type PokemonCardDetailedProps = {
   height?: number
   weight?: number
   types?: string
+  id?: number
   type_array?: string[]
   flavor_text?: string
   flavor_text_entries?: FlavorText[]
@@ -30,26 +32,35 @@ type DexButtonsProps = {
 }
 
 export const PokemonCardDetailed = (pokemon: PokemonCardDetailedProps) => {
-  let type_color_1: string = getTypeColor(pokemon.type_array?.[0])
-  let type_color_2: string = getTypeColor(pokemon.type_array?.[1])
+  const [showShiny, setShowShiny] = useState(false)
+
+  let type_color_1: string = getTypeColor(pokemon.type_array?.[0]) + ' h-fit w-fit font-mono'
+  let type_color_2: string = getTypeColor(pokemon.type_array?.[1]) + ' h-fit w-fit font-mono'
 
   return (
     <div className='px-4'>
-      <div className='text-2xl text-slate-50'>{pokemon.name}</div>
-      <div className='grid grid-cols-3'>
-        <div className='grid grid-rows-2 col-span-1 justify-center'>
+      <div className='flex'>
+        <div className='text-2xl text-slate-50 font-mono'>{pokemon.name}</div>
+        <div className='flex justify-start ml-3 gap-1'>
+          <div className={type_color_1}>{pokemon.type_array?.[0]}</div>
+          <div className={type_color_2}>{pokemon.type_array?.[1] ?? 'none'}</div>
+        </div>
+      </div>
+      <div className='grid grid-cols-3 gap-2'>
+        <div>
           <img
-            src={pokemon.image}
+            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
+              showShiny ? 'shiny/' : ''
+            }${pokemon.id}.png`}
             alt={pokemon.name}
             className='bg-slate-900 w-40 border-2 border-slate-300 rounded-lg drop-shadow-sm'
           />
-          <div className='flex justify-around h-fit mt-2'>
-            <div className={type_color_1}>{pokemon.type_array?.[0]}</div>
-            <div className={type_color_2}>{pokemon.type_array?.[1] ?? 'none'}</div>
+          <div className='mt-2'>
+            <ShinyToggle isOn={showShiny} onToggle={() => setShowShiny(!showShiny)} />
           </div>
         </div>
 
-        <div className='bg-slate-300 italic text-sm rounded-lg h-max w-96 p-4 grid col-span-2 justify-start drop-shadow-sm'>
+        <div className='bg-slate-800 border-2 border-slate-500 italic text-sm text-slate-50 rounded-lg h-max max-w-prose p-4 grid col-span-2 justify-start drop-shadow-sm'>
           <PokemonCardFlavorText3
             pokemon_list={pokemon.pokemon_list}
             pokemon={pokemon.pokemon}
@@ -140,7 +151,7 @@ export const PokemonCardFlavorText3 = (pokemonData: PokemonCardFlavorText3Props)
 
   return (
     <div>
-      <select name='dexes' id='dexes' onChange={(e) => handleDexClick(e)}>
+      <select name='dexes' id='dexes' onChange={(e) => handleDexClick(e)} className='text-slate-900 bg-slate-50'>
         {pokemonData.my_pokemon?.flavor_text_entries
           .filter((value: FlavorText) => value.language.name.includes('en'))
           .map((entry, i) => (
@@ -149,7 +160,7 @@ export const PokemonCardFlavorText3 = (pokemonData: PokemonCardFlavorText3Props)
             </option>
           ))}
       </select>
-      <div className='mt-2'>
+      <div className='mt-2 font-mono'>
         {flavorText ??
           pokemonData.my_pokemon?.flavor_text_entries
             .filter((text: FlavorText) => text.language.name.includes('en'))

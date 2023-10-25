@@ -8,7 +8,7 @@ type ShinyToggleProps = {
 
 export const ShinyToggle = (props: ShinyToggleProps) => {
   return (
-    <div>
+    <div className='flex place-self-center ml-2'>
       <label className='relative inline-flex items-center cursor-pointer'>
         <input type='checkbox' checked={props.isOn} className='sr-only peer' onChange={props.onToggle} />
 
