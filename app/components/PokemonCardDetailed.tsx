@@ -1,5 +1,13 @@
-import { Pokemon, PokemonSpecies } from 'pokenode-ts'
-import { ChangeEvent, useState } from 'react'
+import {
+  Ability,
+  AbilityFlavorText,
+  Pokemon,
+  PokemonAbility,
+  PokemonSpecies,
+  UtilityClient,
+  VerboseEffect,
+} from 'pokenode-ts'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { ShinyToggle } from '.'
 import { FlavorText, PokemonSpeciesResponse } from '../[name]/page'
 
@@ -25,15 +33,7 @@ type PokemonCardFlavorText3Props = {
   my_pokemon?: PokemonSpeciesResponse
 }
 
-type DexButtonsProps = {
-  key?: React.Key
-  pokedex_name: string
-  childToParent: Function
-}
-
 export const PokemonCardDetailed = (pokemon: PokemonCardDetailedProps) => {
-  const [showShiny, setShowShiny] = useState(false)
-
   let type_color_1: string = getTypeColor(pokemon.type_array?.[0]) + ' h-fit w-fit font-mono'
   let type_color_2: string = getTypeColor(pokemon.type_array?.[1]) + ' h-fit w-fit font-mono'
 
@@ -43,30 +43,22 @@ export const PokemonCardDetailed = (pokemon: PokemonCardDetailedProps) => {
         <div className='text-2xl text-slate-50 font-mono'>{pokemon.name}</div>
         <div className='flex justify-start ml-3 gap-1'>
           <div className={type_color_1}>{pokemon.type_array?.[0]}</div>
-          <div className={type_color_2}>{pokemon.type_array?.[1] ?? 'none'}</div>
-        </div>
-      </div>
-      <div className='grid grid-cols-3 gap-2'>
-        <div>
-          <img
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
-              showShiny ? 'shiny/' : ''
-            }${pokemon.id}.png`}
-            alt={pokemon.name}
-            className='bg-slate-900 w-40 border-2 border-slate-300 rounded-lg drop-shadow-sm'
-          />
-          <div className='mt-2'>
-            <ShinyToggle isOn={showShiny} onToggle={() => setShowShiny(!showShiny)} />
+          <div className={`${type_color_2} ${pokemon.type_array?.[1] ? 'visible' : 'invisible w-0'}`}>
+            {pokemon.type_array?.[1] ?? 'none'}
+          </div>
+
+          <div className='text-xs text-slate-100 font-mono grid grid-rows-2 justify-end'>
+            <div>{pokemon.height ? (pokemon.height * 0.1).toFixed(1) : 0} m</div>
+            <div>{pokemon.weight ? (pokemon.weight * 0.1).toFixed(1) : 0} kg</div>
           </div>
         </div>
-
-        <div className='bg-slate-800 border-2 border-slate-500 italic text-sm text-slate-50 rounded-lg h-max max-w-prose p-4 grid col-span-2 justify-start drop-shadow-sm'>
-          <PokemonCardFlavorText3
-            pokemon_list={pokemon.pokemon_list}
-            pokemon={pokemon.pokemon}
-            my_pokemon={pokemon.my_pokemon}
-          />
-        </div>
+      </div>
+      <div className='bg-slate-800 border-2 border-slate-500 italic text-sm text-slate-50 rounded-lg h-max max-w-prose p-4 grid col-span-2 justify-start drop-shadow-sm'>
+        <PokemonCardFlavorText3
+          pokemon_list={pokemon.pokemon_list}
+          pokemon={pokemon.pokemon}
+          my_pokemon={pokemon.my_pokemon}
+        />
       </div>
     </div>
   )
@@ -119,53 +111,235 @@ export const getTypeColor = (type: string | undefined) => {
   }
 }
 
-export const PokemonCardDetailedStats = (pokemon: PokemonCardDetailedProps) => {
+export const PokemonCardFlavorText3 = (pokemonData: PokemonCardFlavorText3Props) => {
+  const [showShiny, setShowShiny] = useState(false)
+  const [shinyUrl, setShinyUrl] = useState<string>()
+  const [flavorText, setFlavorText] = useState<string>()
+  const [spriteUrl, setSpriteUrl] = useState<string>()
+  const [dex, setDex] = useState<string>()
+  let filteredText: FlavorText[] | undefined
+
+  const handleDexSelect = (e: ChangeEvent<HTMLSelectElement>) => {
+    setDex(e.target.value)
+    filteredText = pokemonData.my_pokemon?.flavor_text_entries
+      .filter((value: FlavorText) => value.version.name === e.target.value)
+      .filter((value: FlavorText) => value.language.name.includes('en'))
+    setFlavorText(filteredText?.at(0)?.flavor_text.replace('\f', ' '))
+
+    // TO DO: come up with a smarter way to handle shiny sprites...
+    switch (e.target.value) {
+      case 'red':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-i']['red-blue'].front_transparent ?? undefined)
+        setShinyUrl(undefined)
+        setShowShiny(false)
+        break
+      case 'blue':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-i']['red-blue'].front_transparent ?? undefined)
+        setShinyUrl(undefined)
+        setShowShiny(false)
+        break
+      case 'yellow':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-i']['yellow'].front_transparent ?? undefined)
+        setShinyUrl(undefined)
+        setShowShiny(false)
+        break
+      case 'crystal':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-ii']['crystal'].front_transparent ?? undefined)
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-ii']['crystal'].front_shiny_transparent ?? undefined
+        )
+        break
+      case 'gold':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-ii']['gold'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-ii']['gold'].front_shiny ?? undefined)
+        break
+      case 'silver':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-ii']['silver'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-ii']['silver'].front_shiny ?? undefined)
+        break
+      case 'emerald':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-iii']['emerald'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-iii']['emerald'].front_shiny ?? undefined)
+        break
+      case 'firered':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iii']['firered-leafgreen'].front_default ?? undefined
+        )
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iii']['firered-leafgreen'].front_shiny ?? undefined
+        )
+        break
+      case 'leafgreen':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iii']['firered-leafgreen'].front_default ?? undefined
+        )
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iii']['firered-leafgreen'].front_shiny ?? undefined
+        )
+        break
+      case 'ruby':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iii']['ruby-sapphire'].front_default ?? undefined
+        )
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-iii']['ruby-sapphire'].front_shiny ?? undefined)
+        break
+      case 'sapphire':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iii']['ruby-sapphire'].front_default ?? undefined
+        )
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-iii']['ruby-sapphire'].front_shiny ?? undefined)
+        break
+      case 'diamond':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-iv']['diamond-pearl'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-iv']['diamond-pearl'].front_shiny ?? undefined)
+        break
+      case 'pearl':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-iv']['diamond-pearl'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-iv']['diamond-pearl'].front_shiny ?? undefined)
+        break
+      case 'heartgold':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iv']['heartgold-soulsilver'].front_default ?? undefined
+        )
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iv']['heartgold-soulsilver'].front_shiny ?? undefined
+        )
+        break
+      case 'soulsilver':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iv']['heartgold-soulsilver'].front_default ?? undefined
+        )
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-iv']['heartgold-soulsilver'].front_shiny ?? undefined
+        )
+        break
+      case 'platinum':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-iv']['platinum'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-iv']['platinum'].front_shiny ?? undefined)
+        break
+      case 'black':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-v']['black-white'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-v']['black-white'].front_shiny ?? undefined)
+        break
+      case 'white':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-v']['black-white'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-v']['black-white'].front_shiny ?? undefined)
+        break
+      case 'omegaruby':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-vi']['omegaruby-alphasapphire'].front_default ?? undefined
+        )
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-vi']['omegaruby-alphasapphire'].front_shiny ?? undefined
+        )
+        break
+      case 'alphasapphire':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-vi']['omegaruby-alphasapphire'].front_default ?? undefined
+        )
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-vi']['omegaruby-alphasapphire'].front_shiny ?? undefined
+        )
+        break
+      case 'x':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-vi']['x-y'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-vi']['x-y'].front_shiny ?? undefined)
+        break
+      case 'y':
+        setSpriteUrl(pokemonData.pokemon?.sprites.versions['generation-vi']['x-y'].front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.versions['generation-vi']['x-y'].front_shiny ?? undefined)
+        break
+      case 'ultra-sun':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-vii']['ultra-sun-ultra-moon'].front_default ?? undefined
+        )
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-vii']['ultra-sun-ultra-moon'].front_shiny ?? undefined
+        )
+        break
+      case 'ultra-moon':
+        setSpriteUrl(
+          pokemonData.pokemon?.sprites.versions['generation-vii']['ultra-sun-ultra-moon'].front_default ?? undefined
+        )
+        setShinyUrl(
+          pokemonData.pokemon?.sprites.versions['generation-vii']['ultra-sun-ultra-moon'].front_shiny ?? undefined
+        )
+        break
+      default:
+        setSpriteUrl(pokemonData.pokemon?.sprites.other?.home.front_default ?? undefined)
+        setShinyUrl(pokemonData.pokemon?.sprites.other?.home.front_shiny ?? undefined)
+        break
+    }
+  }
+
   return (
-    <div className='grid grid-cols-2 text-slate-300 gap-4 py-2 text-sm'>
-      <div className='grid grid-rows-2'>
-        <h1 className=''>height:</h1>
-        <h1 className='text-slate-100'>{pokemon.height} dm</h1>
+    <div>
+      <div className='px-2'>
+        <select name='dexes' id='dexes' onChange={(e) => handleDexSelect(e)} className='text-slate-900 bg-slate-50'>
+          {pokemonData.my_pokemon?.flavor_text_entries
+            .filter((value: FlavorText) => value.language.name.includes('en'))
+            .map((entry, i) => (
+              <option value={entry.version.name} key={entry.version.name}>
+                {entry.version.name}
+              </option>
+            ))}
+        </select>
       </div>
-      <div className='grid grid-rows-2'>
-        <h1 className=''>weight:</h1>
-        <h1 className='text-slate-100'>{pokemon.weight} hg</h1>
+      <div className='grid grid-cols-3 gap-1'>
+        <div className='grid col-span-1 mt-2 p-1 h-fit'>
+          <img
+            src={showShiny ? shinyUrl : spriteUrl ?? pokemonData.pokemon?.sprites.front_default ?? undefined}
+            alt={pokemonData.pokemon?.name}
+            className='bg-slate-900 w-40 border-2 border-slate-300 rounded-lg drop-shadow-sm'
+          />
+          <div className={`flex justify-start mt-1 ${shinyUrl != undefined ? 'visible' : 'invisible'}`}>
+            <ShinyToggle isOn={showShiny} onToggle={() => setShowShiny(!showShiny)} />
+          </div>
+        </div>
+        <div className='mt-2 font-mono grid col-span-2'>
+          {flavorText ??
+            pokemonData.my_pokemon?.flavor_text_entries
+              .filter((text: FlavorText) => text.language.name.includes('en'))
+              .at(0)
+              ?.flavor_text.replace('\f', ' ')}
+        </div>
+      </div>
+      <div className='bg-slate-600 rounded-lg w-fit px-1 py-2'>
+        <div className='text-base font-mono ml-2'>abilities</div>
+        {pokemonData.pokemon?.abilities.map((ability, i) => {
+          return <AbilityBlock ability={ability} game={dex ?? 'red'} key={ability.ability.url} />
+        })}
       </div>
     </div>
   )
 }
 
-export const PokemonCardFlavorText = (text: PokemonCardDetailedProps) => {
-  return <div className='italic text-base'>{text.flavor_text?.replace('\f', ' ')}</div>
+export type AbilityBlockProps = {
+  ability: PokemonAbility
+  game: string
+  key: React.Key
 }
 
-export const PokemonCardFlavorText3 = (pokemonData: PokemonCardFlavorText3Props) => {
-  const [flavorText, setFlavorText] = useState<string>()
-  let filteredText: FlavorText[] | undefined
+const api = new UtilityClient()
 
-  const handleDexClick = (e: ChangeEvent<HTMLSelectElement>) => {
-    filteredText = pokemonData.my_pokemon?.flavor_text_entries
-      .filter((value: FlavorText) => value.version.name === e.target.value)
-      .filter((value: FlavorText) => value.language.name.includes('en'))
-    setFlavorText(filteredText?.at(0)?.flavor_text.replace('\f', ' '))
-  }
+export const AbilityBlock = ({ ability, game }: AbilityBlockProps) => {
+  const [data, setData] = useState<Ability>()
+  useEffect(() => {
+    api.getResourceByUrl(ability.ability.url).then((pokemon) => setData(pokemon as Ability))
+  })
+  let effect_entries_filtered = data?.effect_entries.filter((value: VerboseEffect) => value.language.name.match('en'))
+  let flavor_text_entries_filtered = data?.flavor_text_entries
+    .filter((value: AbilityFlavorText) => value.language.name.match('en'))
+    .filter((value: AbilityFlavorText) => value.version_group.name.match(game))
 
   return (
-    <div>
-      <select name='dexes' id='dexes' onChange={(e) => handleDexClick(e)} className='text-slate-900 bg-slate-50'>
-        {pokemonData.my_pokemon?.flavor_text_entries
-          .filter((value: FlavorText) => value.language.name.includes('en'))
-          .map((entry, i) => (
-            <option value={entry.version.name} key={entry.version.name}>
-              {entry.version.name}
-            </option>
-          ))}
-      </select>
-      <div className='mt-2 font-mono'>
-        {flavorText ??
-          pokemonData.my_pokemon?.flavor_text_entries
-            .filter((text: FlavorText) => text.language.name.includes('en'))
-            .at(0)
-            ?.flavor_text.replace('\f', ' ')}
+    <div className='inline-block p-1 not-italic font-mono w-56'>
+      <div className='bg-slate-400 max-w-prose inline-block px-3 py-1 rounded-lg drop-shadow-sm'>
+        <div>
+          <div className='inline text-lg text-slate-900'>{ability.ability.name}</div>
+          <div className='inline italic text-xs'>{ability.is_hidden ? ' hidden' : ''}</div>
+        </div>
+        <div className=''>{flavor_text_entries_filtered?.at(0)?.flavor_text}</div>
       </div>
     </div>
   )

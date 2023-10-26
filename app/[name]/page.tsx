@@ -116,6 +116,8 @@ export default function Page({ params }: { params: { name: string } }) {
             pokemon_list={dataSpecies}
             pokemon={data}
             my_pokemon={myData}
+            height={data?.height}
+            weight={data?.weight}
           />
         </div>
       </div>
