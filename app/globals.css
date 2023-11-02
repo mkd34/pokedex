@@ -22,3 +22,25 @@ body {
   background-image: linear-gradient(to right, #252e42 1px, transparent 1px),
     linear-gradient(to bottom, #252e42 1px, transparent 1px);
 }
+
+@layer utilities {
+  .scrollbar::-webkit-scrollbar {
+    width: 20px;
+    height: 20px;
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background: #334155;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 100vh;
+    border: 3px solid #9ca3af;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #c0a0b9;
+  }
+}

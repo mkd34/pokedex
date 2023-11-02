@@ -17,6 +17,6 @@ const config: Config = {
       display: ['group-hover'],
     },
   },
-  plugins: [],
+  plugins: [require('daisyui')],
 }
 export default config

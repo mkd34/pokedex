@@ -6,7 +6,7 @@ type SearchBarDropDownProps = {
 
 export const SearchBarDropDown = (my_props: SearchBarDropDownProps) => {
   return (
-    <div className='flex justify-end z-50'>
+    <div className='flex justify-end z-50 overflow-visible'>
       <div className='group relative'>
         <button className='bg-slate-400 text-slate-700 font-semibold text-sm py-2 px-4 inline-flex items-center rounded-l-md justify-end'>
           <span className=''>{my_props.label ? my_props.label : 'category'}</span>

@@ -15,7 +15,7 @@ type PokemonCardProps = {
 
 export const PokemonCard = ({ onClick, image, pokemon }: PokemonCardProps) => {
   return (
-    <div className='drop-shadow-lg text-slate-300 font-mono'>
+    <div className='drop-shadow-lg text-slate-300 font-mono hover:cursor-pointer'>
       <div
         onClick={onClick}
         className='bg-slate-700 p-3 rounded-lg border-2 h-fit max-w-fit border-slate-700 drop-shadow-sm hover:bg-slate-800 hover:text-slate-50 hover:border-pink-400'
